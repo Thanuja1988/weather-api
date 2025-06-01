@@ -33,17 +33,24 @@ pipeline {
       steps {
         script {
           echo "Killing old version if running..."
+
+          // Multiline batch script to kill running JAR
           bat '''
+@echo off
+setlocal enabledelayedexpansion
+
 for /F "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%weather-api-1.0-SNAPSHOT.jar%%'" get ProcessId /value 2^>nul') do (
-    if not "%%a"=="" (
-        echo Killing process with PID %%a
-        taskkill /PID %%a /F
+    set "pid=%%a"
+    set "pid=!pid: =!"
+    if not "!pid!"=="" (
+        echo Killing process with PID !pid!
+        taskkill /PID !pid! /F >nul 2>&1
     )
 )
-'''
+endlocal
+          '''
 
-
-          echo "Starting app..."
+          echo "Starting new version..."
           bat "start java -jar target\\%JAR_NAME%"
         }
       }
@@ -52,10 +59,10 @@ for /F "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%wea
 
   post {
     success {
-      echo 'Pipeline completed successfully!'
+      echo '✅ Pipeline completed successfully!'
     }
     failure {
-      echo 'Pipeline failed. Check logs.'
+      echo '❌ Pipeline failed. Check logs.'
     }
   }
 }
