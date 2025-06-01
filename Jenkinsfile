@@ -30,17 +30,23 @@ pipeline {
     }
 
     stage('Deploy') {
-      steps {
-        echo "Killing old version if running..."
-        bat 'pkill -f $JAR_NAME || true'
+  steps {
+    script {
+      echo "Killing old version if running..."
+      bat """
+        for /f "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%$JAR_NAME%%'" get ProcessId /value') do (
+            taskkill /PID %%a /F
+        )
+      """
 
-        echo "Starting app..."
-        bat 'nohup java -jar $WORKSPACE/target/weather-api-0.0.1-SNAPSHOT.jar > $WORKSPACE/app.log 2>&1 &'
-
-        echo "Running App .... "
-        bat 'mvn spring-boot:run'
-      }
+      echo "Starting app..."
+      bat """
+        start java -jar target\\%JAR_NAME%
+      """
     }
+  }
+}
+
   }
 
   post {
