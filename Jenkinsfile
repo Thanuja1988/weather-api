@@ -34,10 +34,13 @@ pipeline {
     script {
       echo "Killing old version if running..."
       bat """
-        for /f "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%$JAR_NAME%%'" get ProcessId /value') do (
-            taskkill /PID %%a /F
-        )
-      """
+        @echo off
+for /F "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%weather-api-1.0-SNAPSHOT.jar%%'" get ProcessId /value 2^>nul') do (
+    if not "%%a"=="" (
+        echo Killing process with PID %%a
+        taskkill /PID %%a /F
+    )
+)
 
       echo "Starting app..."
       bat """
