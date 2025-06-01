@@ -1,9 +1,9 @@
 pipeline {
-  agent any     // Run on any available agent (Jenkins node)
+  agent any
 
   tools {
-    maven 'Maven 3.9.9'  // Name of Maven tool in Jenkins
-    jdk 'JDK 11'         // Name of JDK in Jenkins config
+    maven 'Maven 3.9.9'
+    jdk 'JDK 11'
   }
 
   environment {
@@ -12,10 +12,10 @@ pipeline {
 
   stages {
     stage('Checkout') {
-       steps {
-                git branch: 'main', url: 'https://github.com/asamaranayake/weather-api.git'
-            }
-        }
+      steps {
+        git branch: 'main', url: 'https://github.com/asamaranayake/weather-api.git'
+      }
+    }
 
     stage('Build') {
       steps {
@@ -30,26 +30,23 @@ pipeline {
     }
 
     stage('Deploy') {
-  steps {
-    script {
-      echo "Killing old version if running..."
-      bat """
-        
+      steps {
+        script {
+          echo "Killing old version if running..."
+          bat '''
 for /F "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%weather-api-1.0-SNAPSHOT.jar%%'" get ProcessId /value 2^>nul') do (
     if not "%%a"=="" (
         echo Killing process with PID %%a
         taskkill /PID %%a /F
     )
 )
+          '''
 
-      echo "Starting app..."
-      bat """
-        start java -jar target\\%JAR_NAME%
-      """
+          echo "Starting app..."
+          bat "start java -jar target\\%JAR_NAME%"
+        }
+      }
     }
-  }
-}
-
   }
 
   post {
