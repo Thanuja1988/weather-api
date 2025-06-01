@@ -40,7 +40,8 @@ for /F "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%wea
         taskkill /PID %%a /F
     )
 )
-          '''
+'''
+
 
           echo "Starting app..."
           bat "start java -jar target\\%JAR_NAME%"
