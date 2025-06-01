@@ -1,9 +1,9 @@
 pipeline {
-  agent any
+  agent any     // Run on any available agent (Jenkins node)
 
   tools {
-    maven 'Maven 3.9.9'
-    jdk 'JDK 11'
+    maven 'Maven 3.9.9'  // Name of Maven tool in Jenkins
+    jdk 'JDK 21'         // Name of JDK in Jenkins config
   }
 
   environment {
@@ -12,57 +12,43 @@ pipeline {
 
   stages {
     stage('Checkout') {
-      steps {
-        git branch: 'main', url: 'https://github.com/asamaranayake/weather-api.git'
-      }
-    }
+       steps {
+                git branch: 'main', url: 'https://github.com/asamaranayake/weather-api.git'
+            }
+        }
 
     stage('Build') {
       steps {
-        bat 'mvn clean package -DskipTests'
+        sh 'mvn clean package -DskipTests'
       }
     }
 
     stage('Test') {
       steps {
-        bat 'mvn test'
+        sh 'mvn test'
       }
     }
 
     stage('Deploy') {
       steps {
-        script {
-          echo "Killing old version if running..."
+        echo "Killing old version if running..."
+        sh 'pkill -f $JAR_NAME || true'
 
-          // Multiline batch script to kill running JAR
-          bat '''
-@echo off
-setlocal enabledelayedexpansion
+        echo "Starting app..."
+        sh 'nohup java -jar $WORKSPACE/target/weather-api-0.0.1-SNAPSHOT.jar > $WORKSPACE/app.log 2>&1 &'
 
-for /F "tokens=2 delims==;" %%a in ('wmic process where "CommandLine like '%%weather-api-1.0-SNAPSHOT.jar%%'" get ProcessId /value 2^>nul') do (
-    set "pid=%%a"
-    set "pid=!pid: =!"
-    if not "!pid!"=="" (
-        echo Killing process with PID !pid!
-        taskkill /PID !pid! /F >nul 2>&1
-    )
-)
-endlocal
-          '''
-
-          echo "Starting new version..."
-          bat "start java -jar target\\%JAR_NAME%"
-        }
+        echo "Running App .... "
+        sh 'mvn spring-boot:run'
       }
     }
   }
 
   post {
     success {
-      echo '✅ Pipeline completed successfully!'
+      echo 'Pipeline completed successfully!'
     }
     failure {
-      echo '❌ Pipeline failed. Check logs.'
+      echo 'Pipeline failed. Check logs.'
     }
   }
 }
